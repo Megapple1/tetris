@@ -13,7 +13,7 @@ pygame.display.set_caption("TETRIS")
 FPS = 60
 clock = pygame.time.Clock()
 
-DAS = 7 # Delayed Auto Shift : 꾹 눌렀다고 인식하기까지 걸리는 시간 (단위 : 프레임)
+DAS = 6 # Delayed Auto Shift : 꾹 눌렀다고 인식하기까지 걸리는 시간 (단위 : 프레임)
 ARR = 1 # Auto Repeat Rate : 꾹 눌렀을 떄 한 칸씩 움직이는 데 걸리는 시간 (단위 : 프레임)
 GRAV = 0.05 # 미노가 내려오는 속도 (기본 : 20프레임에 한 칸)
 
@@ -56,8 +56,9 @@ NEXT = ["I", "O", "T", "L", "J", "S", "Z"] # 다음으로 나올 미노들
 AFTER_NEXT = [i for i in NEXT] # 그 다음으로 나올 미노들
 random.shuffle(NEXT) 
 random.shuffle(AFTER_NEXT) # 랜덤으로 섞기
+TOTAL_NEXT = NEXT + AFTER_NEXT
 cnt = 0 # 현재 미노가 현재 가방에서 몇 번째 미노인지 (0 ~ 6)
-
+CURRENT_NEXT = [i for i in TOTAL_NEXT]
 
 TETROMINOS = {
     "I" : [vec(-1, 0), vec(-2, 0), vec(0, 0), vec(1, 0)],
@@ -205,8 +206,9 @@ score = 0 # 점수
 while running:
     clock.tick(FPS)
 
-    print(score)
+    print(cnt)
     TOTAL_NEXT = NEXT + AFTER_NEXT # 다음 미노들 (14개)
+    
 
     for line in BOARD: # 떨어지는 중인 미노 흔적 없애기
         for j in line:
@@ -228,6 +230,7 @@ while running:
             PIECE.fallen()
             PIECE = Block(NEXT[cnt]) # 다음 미노로 바꾸기
             cnt += 1
+            CURRENT_NEXT.remove(CURRENT_NEXT[0])
             HOLD_USED = 0
     else:
         PIECE.fall() # 아니면 그냥 계속 떨어짐
@@ -237,6 +240,7 @@ while running:
         cnt = 0
         NEXT = [i for i in AFTER_NEXT]
         random.shuffle(AFTER_NEXT)
+        CURRENT_NEXT += AFTER_NEXT
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -250,6 +254,7 @@ while running:
                 PIECE.fallen()
                 PIECE = Block(NEXT[cnt])
                 cnt += 1
+                CURRENT_NEXT.remove(CURRENT_NEXT[0])
                 HOLD_USED = 0
                     
 
@@ -273,12 +278,12 @@ while running:
                     HOLD = PIECE.block
                     PIECE = Block(NEXT[cnt])
                     cnt += 1
+                    CURRENT_NEXT.remove(CURRENT_NEXT[0])
                     HOLD_USED = 1
                 else:    
                     TEMP = HOLD
                     HOLD = PIECE.block
                     PIECE = Block(TEMP)
-                    cnt += 1
                     HOLD_USED = 1
                 
 
@@ -352,7 +357,7 @@ while running:
     NEXT_GRID.fill(BLACK)
     pygame.draw.rect(NEXT_GRID, GRAY, [0, 0, 100, 500], 1)
     NEXT_IDX = 0
-    for i in TOTAL_NEXT[(cnt):((cnt+5))]: # 다음 미노들 스크린에 표시
+    for i in CURRENT_NEXT[1:6]: # 다음 미노들 스크린에 표시
         for j in TETROMINOS[i]:
             PIXEL.fill(COLORS[i])
             NEXT_GRID.blit(PIXEL, (40 + j.x * 20, 40 + j.y * 20 + NEXT_IDX * 100))
